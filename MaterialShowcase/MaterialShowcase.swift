@@ -44,8 +44,11 @@ public class MaterialShowcase: UIView {
   fileprivate var primaryLabel: UILabel!
   fileprivate var secondaryLabel: UILabel!
   
+  fileprivate var tabBarItem: UITabBarItem?
+  
+  
   // MARK: Public Properties
-
+  
   // Background
   public var backgroundPromptColor: UIColor!
   public var backgroundPromptColorAlpha: CGFloat!
@@ -100,6 +103,7 @@ extension MaterialShowcase {
   // Sets a UITabBar Item as target
   public func setTargetView(tabBar: UITabBar, itemIndex: Int) {
     let tabBarItems = orderedTabBarItemViews(of: tabBar)
+    self.tabBarItem = tabBar.items?[itemIndex]
     if itemIndex < tabBarItems.count {
       targetView = tabBarItems[itemIndex]
     } else {
@@ -249,11 +253,18 @@ extension MaterialShowcase {
   // Create a copy view of target view
   // It helps us not to affect the original target view
   private func addTarget(at center: CGPoint) {
-    targetCopyView = targetView.copyView() as! UIView
+    if let tabBarItem = self.tabBarItem {
+      let targetView = self.createTabBarItemTargetView(at: center, from: tabBarItem)
+      targetCopyView = targetView
+    } else {
+      targetCopyView = targetView.copyView() as! UIView
+      
+      let width = targetCopyView.frame.width
+      let height = targetCopyView.frame.height
+      targetCopyView.frame = CGRect(x: center.x - width/2, y: center.y - height/2, width: width, height: height)
+    }
+    
     targetCopyView.tintColor = targetTintColor
-    let width = targetCopyView.frame.width
-    let height = targetCopyView.frame.height
-    targetCopyView.frame = CGRect(x: center.x - width/2, y: center.y - height/2, width: width, height: height)
     addSubview(targetCopyView)
   }
   
@@ -297,7 +308,7 @@ extension MaterialShowcase {
     secondaryLabel.text = secondaryText
     secondaryLabel.numberOfLines = 3
     
-    // Calculate x position 
+    // Calculate x position
     let xPosition = (backgroundView.frame.minX > 0 ?
       backgroundView.frame.minX + LABEL_MARGIN : LABEL_MARGIN)
     
@@ -345,6 +356,47 @@ extension MaterialShowcase {
     for subview in subviews {
       subview.removeFromSuperview()
     }
+  }
+  
+  private func createTabBarItemTargetView(at center: CGPoint, from tabBarItem: UITabBarItem) -> UIView {
+    let view = UIView()
+    
+    let width = targetView.frame.width
+    let height = targetView.frame.height
+    view.frame = CGRect(x: center.x - width/2, y: center.y - height/2, width: width, height: height)
+    
+    guard let image = tabBarItem.image else {
+      return view
+    }
+    
+    let imageWidth: CGFloat = 30.0
+    let imageTopMargin: CGFloat = 5.0
+    
+    let imageView = UIImageView(image: image)
+    imageView.contentMode = .scaleAspectFit
+    imageView.frame = CGRect(x: width/2 - image.size.width/2,
+                             y: imageTopMargin,
+                             width: imageWidth,
+                             height: imageWidth)
+    
+    imageView.tintColor = targetTintColor
+    view.addSubview(imageView)
+    
+    let labelHeight: CGFloat = 10.0
+    let labelBottomMargin: CGFloat = 2.0
+    
+    let label = UILabel()
+    label.font = UIFont.systemFont(ofSize: 10)
+    label.frame = CGRect(x: 0,
+                         y: height - labelHeight - labelBottomMargin,
+                         width: width,
+                         height: labelHeight)
+    label.textAlignment = .center
+    label.text = tabBarItem.title
+    label.textColor = targetTintColor
+    
+    view.addSubview(label)
+    return view
   }
 }
 
